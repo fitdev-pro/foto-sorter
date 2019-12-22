@@ -1,8 +1,9 @@
 package UserInterface;
 
-import Application.InitGalleryService;
-import Application.OpenGalleryService;
-import Domain.Gallery;
+import Application.Gallery.AddNewGalleryService;
+import Application.Gallery.IGalleryRepository;
+import Application.Gallery.InitGalleryService;
+import Infrastructure.GalleryRepository;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -11,6 +12,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
 
 public class Controller {
 
@@ -20,7 +22,11 @@ public class Controller {
     @FXML
     private TextField newGalleryPathTextField;
 
-    private Gallery gallery;
+    private IGalleryRepository repository;
+
+    public Controller() {
+        this.repository = new GalleryRepository();
+    }
 
     @FXML
     private void rootGalleryChoseAction(ActionEvent event){
@@ -30,13 +36,12 @@ public class Controller {
         File dir = directoryChooser.showDialog(stage);
 
         if(dir != null){
-            File[] matches = dir.listFiles((dir1, name) -> name.equals("gallerySettings.json"));
-
-            if(matches != null && matches.length == 1){
-                this.gallery = OpenGalleryService.dispath(dir.getAbsolutePath(),"");
-            }else{
-                this.gallery = InitGalleryService.dispath(dir.getAbsolutePath());
-                // nowy plik
+            try {
+                new InitGalleryService(this.repository).invoke(dir.getAbsolutePath());
+                newGalleryPathTextField.setText( "" );
+                stage.setTitle("Foto sorter - "+dir.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -46,10 +51,11 @@ public class Controller {
         final DirectoryChooser directoryChooser = new DirectoryChooser();
 
         Stage stage = (Stage) newGalleryPathPane.getScene().getWindow();
-        File file = directoryChooser.showDialog(stage);
+        File dir = directoryChooser.showDialog(stage);
 
-        if(file != null){
-            newGalleryPathTextField.setText( file.getAbsolutePath() );
+        if(dir != null){
+            new AddNewGalleryService(this.repository).invoke(dir.getAbsolutePath());
+            newGalleryPathTextField.setText( dir.getAbsolutePath() );
         }
     }
 
@@ -57,7 +63,8 @@ public class Controller {
     private void checkNamesAction(ActionEvent event){
         String newGalleryPathString = newGalleryPathTextField.getText();
 
-
+        System.out.println(this.repository.fetch().getRootGalleryDir());
+        System.out.println(this.repository.fetch().getNewGalleryDir());
     }
 
     @FXML
