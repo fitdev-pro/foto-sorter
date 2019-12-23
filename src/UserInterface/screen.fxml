@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UserInterface.Controller">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="UserInterface.Controller">
    <children>
       <MenuBar fx:id="menuBar">
         <menus>
@@ -29,15 +29,15 @@
           </Menu>
         </menus>
       </MenuBar>
-      <Label text="Nowa galeria">
+      <Label fx:id="newGalleryLabel" disable="true" text="Nowa galeria">
          <padding>
             <Insets left="10.0" top="10.0" />
          </padding>
       </Label>
       <HBox fx:id="newGalleryPathPane" prefHeight="100.0" prefWidth="200.0">
          <children>
-            <TextField fx:id="newGalleryPathTextField" prefHeight="27.0" HBox.hgrow="ALWAYS" />
-            <Button mnemonicParsing="false" onAction="#newGalleryChoseAction" text="Wybierz">
+            <TextField fx:id="newGalleryPathTextField" disable="true" onKeyTyped="#newGalleryChangeAction" prefHeight="27.0" HBox.hgrow="ALWAYS" />
+            <Button fx:id="newGalleryChoseBtn" disable="true" mnemonicParsing="false" onAction="#newGalleryChoseAction" text="Wybierz">
                <HBox.margin>
                   <Insets left="10.0" />
                </HBox.margin>
@@ -50,15 +50,15 @@
       <Separator prefWidth="200.0" />
       <HBox prefWidth="200.0" spacing="10.0">
          <children>
-          <Button alignment="CENTER" mnemonicParsing="false" onAction="#checkNamesAction" text="Zmiana nazwy" />
-            <Button mnemonicParsing="false" onAction="#checkDuplicatesAction" text="Duplikaty" />
-            <Button mnemonicParsing="false" onAction="#checkOrderAction" text="Sortowanie" />
+          <Button alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#checkNamesAction" text="Zmiana nazwy" />
+            <Button disable="true" mnemonicParsing="false" onAction="#checkDuplicatesAction" text="Duplikaty" />
+            <Button disable="true" mnemonicParsing="false" onAction="#checkOrderAction" text="Sortowanie" />
          </children>
          <VBox.margin>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </VBox.margin>
       </HBox>
-      <ListView prefHeight="500.0" prefWidth="200.0" />
+      <ListView fx:id="list" prefHeight="500.0" prefWidth="200.0" />
       <HBox alignment="TOP_RIGHT" prefWidth="200.0" spacing="10.0">
          <children>
           <Button disable="true" mnemonicParsing="false" text="Wykonaj" />
