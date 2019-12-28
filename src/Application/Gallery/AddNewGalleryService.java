@@ -1,10 +1,12 @@
 package Application.Gallery;
 
 
-public class AddNewGalleryService {
-    private IGalleryRepository repository;
+import Application.IRepository;
 
-    public AddNewGalleryService(IGalleryRepository repository) {
+public class AddNewGalleryService {
+    private IRepository repository;
+
+    public AddNewGalleryService(IRepository repository) {
         this.repository = repository;
     }
 
