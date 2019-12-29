@@ -32,8 +32,14 @@ public class GetFilesRenamingDetails {
                 try {
                     Metadata metadata = ImageMetadataReader.readMetadata(new File(fileName));
                     ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
+                    if(directory == null) {
+                        throw new ImageProcessingException("No date");
+                    }
                     Date date = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
 
+                    if(date == null) {
+                        throw new ImageProcessingException("No date");
+                    }
                     out.add(new FileResult(fileName, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date)));
                 }catch (ImageProcessingException e){
                     out.add(new FileResult(fileName, "no date"));

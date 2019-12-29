@@ -14,6 +14,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -48,9 +49,9 @@ public class Controller {
     @FXML
     private TableView<FileResult> tableView;
     @FXML
-    private TableColumn<String, FileResult> tableColumnSource;
+    private TableColumn<FileResult,String> tableColumnSource;
     @FXML
-    private TableColumn<String, FileResult> tableColumnResult;
+    private TableColumn<FileResult, String> tableColumnResult;
 
     @FXML
     private ImageView image;
@@ -115,14 +116,16 @@ public class Controller {
     @FXML
     private void checkNamesAction(ActionEvent event) throws IOException {
         this.updateList(new GetFilesRenamingDetails(this.repository).invoke());
+        this.tableView.setEditable(true);
+        this.tableColumnResult.setCellFactory(TextFieldTableCell.forTableColumn());
+        this.tableColumnResult.setOnEditCommit((TableColumn.CellEditEvent<FileResult, String> t) -> {
+            FileResult f = t.getTableView().getItems().get(t.getTablePosition().getRow());
+            f.setResult(t.getNewValue());
+        });
+
         this.cancel.setDisable(false);
         this.run.setDisable(false);
-        this.run.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                InfoDialog.show("Hura", "Coś trzeba zrobić z tymi plikami.");
-            }
-        });
+        this.run.setOnAction(new RenameActionHandler(this.tableView.getItems()));
 
 //        this.tableView.setRowFactory(param -> {
 //            TableRow<FileResult> row = new TableRow<>();
@@ -142,6 +145,19 @@ public class Controller {
                 this.imageLabel.setText("File: " + path);
             }
         });
+    }
+
+    private static class RenameActionHandler implements EventHandler<ActionEvent>{
+        private Collection<FileResult> items;
+
+        public RenameActionHandler(Collection<FileResult> items) {
+            this.items = items;
+        }
+
+        @Override
+        public void handle(ActionEvent event) {
+            InfoDialog.show("Hura", "Coś trzeba zrobić z tymi plikami.");
+        }
     }
 
     @FXML
