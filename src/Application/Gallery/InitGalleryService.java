@@ -1,17 +1,20 @@
 package Application.Gallery;
 
 import Application.IRepository;
+import Application.IService;
+import Domain.FileResult;
 
-import java.io.IOException;
+import java.util.Collection;
 
-public class InitGalleryService {
-    private IRepository repository;
 
-    public InitGalleryService(IRepository repository) {
-        this.repository = repository;
+public class InitGalleryService implements IService {
+    private String path;
+
+    public InitGalleryService(String path) {
+        this.path = path;
     }
 
-    public void invoke(String path) throws IOException {
-        this.repository.initGallery(path);
+    public Collection<FileResult> invoke(IRepository repository){
+        return repository.initGallery(path);
     }
 }

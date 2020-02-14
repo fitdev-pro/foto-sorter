@@ -2,15 +2,16 @@ package Application.Gallery;
 
 
 import Application.IRepository;
+import Application.IService;
 
-public class AddNewGalleryService {
-    private IRepository repository;
+public class AddNewGalleryService implements IService {
+    private String path;
 
-    public AddNewGalleryService(IRepository repository) {
-        this.repository = repository;
+    public AddNewGalleryService(String path) {
+        this.path = path;
     }
 
-    public void invoke(String path){
-        this.repository.fetch().setNewGalleryPath(path);
+    public void invoke(IRepository repository){
+        repository.fetch().setNewGalleryPath(this.path);
     }
 }

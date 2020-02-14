@@ -1,14 +1,11 @@
 package UserInterface;
 
 import Application.Gallery.AddNewGalleryService;
-import Application.IRepository;
 import Application.Gallery.InitGalleryService;
 import Application.Renaming.GetFilesRenamingDetails;
 import Domain.FileResult;
-import Infrastructure.GalleryRepository;
-import UserInterface.Components.Dialogs.ExceptionDialog;
+import Infrastructure.DependencyContainer;
 import UserInterface.Components.Dialogs.InfoDialog;
-import com.drew.imaging.ImageProcessingException;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -58,12 +55,6 @@ public class Controller {
     @FXML
     private Label imageLabel;
 
-    private IRepository repository;
-
-    public Controller() {
-        this.repository = new GalleryRepository();
-    }
-
     @FXML
     private void rootGalleryChoseAction(ActionEvent event){
         final DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -72,16 +63,12 @@ public class Controller {
         File dir = directoryChooser.showDialog(stage);
 
         if(dir != null){
-            try {
-                new InitGalleryService(this.repository).invoke(dir.getAbsolutePath());
-                newGalleryPathTextField.setDisable(false);
-                newGalleryPathTextField.setText( "" );
-                newGalleryChoseBtn.setDisable(false);
-                newGalleryLabel.setDisable(false);
-                stage.setTitle("Foto sorter - "+dir.getAbsolutePath());
-            } catch (IOException e) {
-                ExceptionDialog.show(e);
-            }
+            DependencyContainer.getInstance().getServiceDispatcher().dispatch(new InitGalleryService(dir.getAbsolutePath()));
+            newGalleryPathTextField.setDisable(false);
+            newGalleryPathTextField.setText( "" );
+            newGalleryChoseBtn.setDisable(false);
+            newGalleryLabel.setDisable(false);
+            stage.setTitle("Foto sorter - "+dir.getAbsolutePath());
         }
     }
 
@@ -93,7 +80,7 @@ public class Controller {
         File dir = directoryChooser.showDialog(stage);
 
         if(dir != null){
-            new AddNewGalleryService(this.repository).invoke(dir.getAbsolutePath());
+            DependencyContainer.getInstance().getServiceDispatcher().dispatch(new AddNewGalleryService(dir.getAbsolutePath()));
             newGalleryPathTextField.setText( dir.getAbsolutePath() );
             changeNameBtn.setDisable(false);
         }
@@ -114,19 +101,20 @@ public class Controller {
     }
 
     @FXML
-    private void checkNamesAction(ActionEvent event) throws IOException {
+    private void checkNamesAction(ActionEvent event) {
         this.updateList(new GetFilesRenamingDetails(this.repository).invoke());
-        this.tableView.setEditable(true);
         this.tableColumnResult.setCellFactory(TextFieldTableCell.forTableColumn());
         this.tableColumnResult.setOnEditCommit((TableColumn.CellEditEvent<FileResult, String> t) -> {
             FileResult f = t.getTableView().getItems().get(t.getTablePosition().getRow());
             f.setResult(t.getNewValue());
         });
 
-        this.cancel.setDisable(false);
-        this.run.setDisable(false);
-        this.run.setOnAction(new RenameActionHandler(this.tableView.getItems()));
+        if (this.tableView.getItems().size() > 0) {
+            this.cancel.setDisable(false);
+            this.run.setDisable(false);
+            this.run.setOnAction(new RenameActionHandler(this.tableView.getItems()));
 
+//        this.tableView.setEditable(true);
 //        this.tableView.setRowFactory(param -> {
 //            TableRow<FileResult> row = new TableRow<>();
 //            row.setOnMouseClicked(eventClick -> {
@@ -137,14 +125,15 @@ public class Controller {
 //            return row ;
 //        });
 
-        this.tableView.getSelectionModel().selectedItemProperty().addListener( (obs, oldSelection, newSelection) -> {
-            if(obs.getValue() != null) {
-                String path = obs.getValue().getSource();
-                File file = new File(path);
-                this.image.setImage(new Image(file.toURI().toString()));
-                this.imageLabel.setText("File: " + path);
-            }
-        });
+            this.tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+                if (obs.getValue() != null) {
+                    String path = obs.getValue().getSource();
+                    File file = new File(path);
+                    this.image.setImage(new Image(file.toURI().toString()));
+                    this.imageLabel.setText("File: " + path);
+                }
+            });
+        }
     }
 
     private static class RenameActionHandler implements EventHandler<ActionEvent>{
@@ -156,7 +145,22 @@ public class Controller {
 
         @Override
         public void handle(ActionEvent event) {
-            InfoDialog.show("Hura", "Coś trzeba zrobić z tymi plikami.");
+            int i = 0;
+            int all = items.size();
+
+            for (FileResult item: items) {
+                File oldFile = new File(item.getSource());
+                File newFile = new File(item.getResult());
+
+                if (!newFile.exists()) {
+                    boolean success = oldFile.renameTo(newFile);
+                    if (success) {
+                        i++;
+                    }
+                }
+            }
+
+            InfoDialog.show("Hura", "Udało się pozmieniać nazwy plików("+i+"/"+all+")");
         }
     }
 
@@ -176,16 +180,38 @@ public class Controller {
 
     @FXML
     private void checkOrderAction(ActionEvent event){
-        String newGalleryPathString = newGalleryPathTextField.getText();
-
-        this.cancel.setDisable(false);
-        this.run.setDisable(false);
-        this.run.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-
-            }
+        this.updateList(new GetFilesRenamingDetails(this.repository).invoke());
+        this.tableColumnResult.setCellFactory(TextFieldTableCell.forTableColumn());
+        this.tableColumnResult.setOnEditCommit((TableColumn.CellEditEvent<FileResult, String> t) -> {
+            FileResult f = t.getTableView().getItems().get(t.getTablePosition().getRow());
+            f.setResult(t.getNewValue());
         });
+
+        if (this.tableView.getItems().size() > 0) {
+            this.cancel.setDisable(false);
+            this.run.setDisable(false);
+            this.run.setOnAction(new RenameActionHandler(this.tableView.getItems()));
+
+//        this.tableView.setEditable(true);
+//        this.tableView.setRowFactory(param -> {
+//            TableRow<FileResult> row = new TableRow<>();
+//            row.setOnMouseClicked(eventClick -> {
+//                if (eventClick.getClickCount() == 2 && (! row.isEmpty()) ) {
+//                    InfoDialog.show("Hura", "Coś trzeba zrobić z tymi plikami.");
+//                }
+//            });
+//            return row ;
+//        });
+
+            this.tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+                if (obs.getValue() != null) {
+                    String path = obs.getValue().getSource();
+                    File file = new File(path);
+                    this.image.setImage(new Image(file.toURI().toString()));
+                    this.imageLabel.setText("File: " + path);
+                }
+            });
+        }
     }
 }
 
