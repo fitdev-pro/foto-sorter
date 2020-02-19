@@ -1,12 +1,12 @@
 package Infrastructure;
 
-import Application.IRepository;
+import Application.*;
 
 public class DependencyContainer {
     private static DependencyContainer instance;
 
-    private IRepository repository;
-    private ServiceDispatcher serviceDispatcher;
+    private IGalleryRepository galleryRepository;
+    private IFilesRepository filesRepository;
 
     public static DependencyContainer getInstance(){
         if(instance == null){
@@ -17,13 +17,19 @@ public class DependencyContainer {
     }
 
     private DependencyContainer() {
-        this.repository = new GalleryRepository();
-        this.serviceDispatcher = new ServiceDispatcher(this.repository);
+        this.galleryRepository = new GalleryRepository();
+        this.filesRepository = new FilesRepository();
     }
 
-    public ServiceDispatcher getServiceDispatcher(){
-        return serviceDispatcher;
+    public GalleryService getGalleryService() {
+        return new GalleryService(galleryRepository);
     }
 
-    public void initService
+    public RenamingService getRenamingService() {
+        return new RenamingService(filesRepository, galleryRepository);
+    }
+
+    public DeletingService getDeletingService(){
+        return new DeletingService(filesRepository, galleryRepository);
+    }
 }

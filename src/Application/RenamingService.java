@@ -1,8 +1,8 @@
-package Application.Renaming;
+package Application;
 
-import Application.IRepository;
 import Domain.FileResult;
 import Domain.Gallery;
+import Infrastructure.GalleryNotInitException;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
@@ -14,16 +14,19 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
-public class GetFilesRenamingDetails {
-    private IRepository repository;
+public class RenamingService {
+    private IFilesRepository filesRepository;
+    private IGalleryRepository galleryRepository;
 
-    public GetFilesRenamingDetails(IRepository repository) {
-        this.repository = repository;
+    public RenamingService(IFilesRepository filesRepository, IGalleryRepository galleryRepository) {
+
+        this.filesRepository = filesRepository;
+        this.galleryRepository = galleryRepository;
     }
 
-    public Collection<FileResult> invoke() {
-        Gallery gallery = this.repository.fetch();
-        List<String> files = this.repository.getFiles(gallery.getNewGalleryDir());
+    public Collection<FileResult> fetchNewFiles() throws GalleryNotInitException {
+        Gallery gallery = galleryRepository.fetch();
+        List<String> files = filesRepository.getFiles(gallery.getNewGalleryDir());
 
         Collection<FileResult> out = new LinkedList<>();
 

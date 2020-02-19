@@ -1,40 +1,40 @@
 package Infrastructure;
 
-import Application.IRepository;
-import Domain.FileResult;
+import Application.IGalleryRepository;
 import Domain.Gallery;
-import UserInterface.Components.Dialogs.ExceptionDialog;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class GalleryRepository implements IRepository
+public class GalleryRepository implements IGalleryRepository
 {
     private Gallery gallery;
 
     @Override
-    public Gallery fetch() {
+    public Gallery fetch() throws GalleryNotInitException {
+        if(gallery == null){
+            throw new GalleryNotInitException("Failed to init gallery settings", new NullPointerException());
+        }
         return this.gallery;
     }
 
-    @Override
-    public void saveGallerySettings(Gallery gallery) throws IOException {
-        FileWriter file = new FileWriter(this.gallery.getRootGalleryDir()+"/gallerySettings.json");
-        file.write(gallery.toJsonString());
-        file.flush();
+    private void saveGallerySettings(Gallery gallery) throws GalleryNotInitException {
+        try {
+            FileWriter file = new FileWriter(this.gallery.getRootGalleryDir() + "/gallerySettings.json");
+            file.write(gallery.toJsonString());
+            file.flush();
+        } catch (IOException e){
+            throw new GalleryNotInitException("Failed to init gallery settings", e);
+        }
     }
 
     @Override
-    public void initGallery(String path) throws IOException {
+    public void initGallery(String path) throws GalleryNotInitException{
         try (FileReader reader = new FileReader(path+"/gallerySettings.json"))
         {
             //Read JSON file
@@ -44,19 +44,9 @@ public class GalleryRepository implements IRepository
             JSONObject galleryData = (JSONObject) obj;
 
             this.gallery = Gallery.fromJson(path, galleryData);
-        } catch (FileNotFoundException | ParseException e) {
+        } catch (IOException | ParseException e) {
             this.gallery = new Gallery(path, new HashMap<String, String>());
             this.saveGallerySettings(gallery);
-        }
-    }
-
-    @Override
-    public List<String> getFiles(String path) {
-        try (Stream<Path> walk = Files.walk(Paths.get(path))) {
-            return walk.filter(Files::isRegularFile).map(x -> x.toString()).collect(Collectors.toList());
-        } catch (IOException e) {
-            ExceptionDialog.show(e);
-            return null;
         }
     }
 }
