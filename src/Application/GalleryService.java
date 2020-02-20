@@ -1,7 +1,5 @@
 package Application;
 
-import Infrastructure.GalleryNotInitException;
-
 
 public class GalleryService {
     private IGalleryRepository repository;

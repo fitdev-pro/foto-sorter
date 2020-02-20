@@ -1,4 +1,4 @@
-package Infrastructure;
+package Application;
 
 
 public class GalleryNotInitException extends Exception{

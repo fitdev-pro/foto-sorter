@@ -3,15 +3,16 @@ package Application;
 import Domain.*;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
-
-public class RenamingService {
+public class MoveService {
     private IFilesRepository filesRepository;
     private IGalleryRepository galleryRepository;
     private Collection<IFotoCreationDateReader> fotoCreationDateReaders;
 
-    public RenamingService(IFilesRepository filesRepository, IGalleryRepository galleryRepository, Collection<IFotoCreationDateReader> fotoCreationDateReaders) {
+    public MoveService(IFilesRepository filesRepository, IGalleryRepository galleryRepository, Collection<IFotoCreationDateReader> fotoCreationDateReaders) {
 
         this.filesRepository = filesRepository;
         this.galleryRepository = galleryRepository;
@@ -28,12 +29,12 @@ public class RenamingService {
             for(String filePath : files){
                 Foto file = new Foto(filePath, fotoCreationDateReaders);
 
-                try{
-                    if(file.isFoto()) {
-                        String resultFilePath = file.getDirectoryPath() + "/" + file.generateFileNameWithDate();
-                        if (!filePath.equals(resultFilePath)) {
-                            out.add(new FileResult(filePath, resultFilePath));
-                        }
+                try {
+                    String resultFilePath = gallery.getRootGalleryDir() + "/" + file.generateDirectoryPathWithDate() + "/" + file.getFileName();
+                    File newFile = new File(resultFilePath);
+
+                    if (!newFile.exists()) {
+                        out.add(new FileResult(filePath, resultFilePath));
                     }
                 }catch (CorruptedFotoException e){
                     continue;
@@ -44,7 +45,7 @@ public class RenamingService {
         return out;
     }
 
-    public String renameFiles(Collection<FileResult> files){
+    public String moveFiles(Collection<FileResult> files) {
         int i = 0;
         int all = files.size();
 
@@ -53,9 +54,18 @@ public class RenamingService {
             File newFile = new File(item.getResult());
 
             if (!newFile.exists()) {
-                boolean success = oldFile.renameTo(newFile);
-                if (success) {
-                    i++;
+                File parentDir = new File(newFile.getParent());
+                boolean parentDirExists = parentDir.exists();
+
+                if(!parentDirExists){
+                    parentDirExists = parentDir.mkdirs();
+                }
+
+                if (parentDirExists){
+                    boolean successMove = oldFile.renameTo(newFile);
+                    if (successMove) {
+                        i++;
+                    }
                 }
             }
         }

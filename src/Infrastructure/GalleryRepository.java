@@ -1,5 +1,6 @@
 package Infrastructure;
 
+import Application.GalleryNotInitException;
 import Application.IGalleryRepository;
 import Domain.Gallery;
 import org.json.simple.JSONObject;

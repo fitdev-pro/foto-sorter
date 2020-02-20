@@ -1,11 +1,9 @@
 package UserInterface;
 
-import Application.DeletingService;
-import Application.GalleryService;
-import Application.RenamingService;
+import Application.*;
 import Domain.FileResult;
 import Infrastructure.DependencyContainer;
-import Infrastructure.GalleryNotInitException;
+import Application.GalleryNotInitException;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -15,7 +13,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
@@ -117,6 +114,31 @@ public class Controller {
         this.tableColumnSource.setCellValueFactory(new PropertyValueFactory<>("source"));
         this.tableColumnResult.setCellValueFactory(new PropertyValueFactory<>("result"));
 
+        this.tableView.setRowFactory(row -> {
+            TableRow<FileResult> rowNew = new TableRow<FileResult>(){
+                    @Override
+                    public void updateItem(FileResult item, boolean empty){
+                        super.updateItem(item, empty);
+
+                        if (item == null || empty) {
+                            setStyle("");
+                        }else if (item.isChecked()) {
+                            setStyle("-fx-background-color: tomato;");
+                        } else {
+                            setStyle("");
+                        }
+                    }
+
+                };
+
+                rowNew.setOnMouseClicked(eventClick -> {
+                    if (eventClick.getClickCount() == 2 && (! rowNew.isEmpty()) ) {
+                        rowNew.getItem().triggerCheck();
+                    }
+                });
+                return rowNew;
+            });
+
         this.tableView.getItems().setAll(list);
     }
 
@@ -164,24 +186,12 @@ public class Controller {
             detailsBox.hideInfo();
             messageBox.hideMessage();
 
-            int i = 0;
-            int all = items.size();
+            RenamingService renamingService = DependencyContainer.getInstance().getRenamingService();
+            String result = renamingService.renameFiles(items);
 
-            for (FileResult item: items) {
-                File oldFile = new File(item.getSource());
-                File newFile = new File(item.getResult());
+            messageBox.showInfo("Udało się pozmieniać nazwy plików("+result+")");
 
-                if (!newFile.exists()) {
-                    boolean success = oldFile.renameTo(newFile);
-                    if (success) {
-                        i++;
-                    }
-                }
-            }
-
-            messageBox.showInfo("Udało się pozmieniać nazwy plików("+i+"/"+all+")");
-
-            this.items.clear();
+            items.clear();
         }
     }
 
@@ -190,19 +200,44 @@ public class Controller {
         messageBox.hideMessage();
         detailsBox.hideInfo();
 
-        RenamingService renamingService = DependencyContainer.getInstance().getRenamingService();
-        this.updateList(renamingService.fetchNewFiles());
+        DuplicatesService duplicatesService = DependencyContainer.getInstance().getDuplicatesService();
+        this.updateList(duplicatesService.fetchNewFiles());
 
 
         if (this.tableView.getItems().size() > 0) {
             this.run.setDisable(false);
-//            this.run.setOnAction(new RenameActionHandler(this.tableView.getItems(), messageBox));
+            this.run.setOnAction(new DeleteActionHandler(this.tableView.getItems(), messageBox, detailsBox));
 
             this.tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
                 if (obs.getValue() != null) {
                     detailsBox.showInfo(obs.getValue().getSource());
                 }
             });
+        }
+    }
+
+    private static class RemoveDuplicatesActionHandler implements EventHandler<ActionEvent>{
+        private Collection<FileResult> items;
+        private MessageBox messageBox;
+        private DetailsBox detailsBox;
+
+        public RemoveDuplicatesActionHandler(Collection<FileResult> items, MessageBox messageBox, DetailsBox detailsBox) {
+            this.items = items;
+            this.messageBox = messageBox;
+            this.detailsBox = detailsBox;
+        }
+
+        @Override
+        public void handle(ActionEvent event) {
+            detailsBox.hideInfo();
+            messageBox.hideMessage();
+
+            DuplicatesService duplicatesService = DependencyContainer.getInstance().getDuplicatesService();
+            String results = duplicatesService.deleteDuplicates(items);
+
+            messageBox.showInfo("Udało się usunąć pliki ("+results+")");
+
+            items.clear();
         }
     }
 
@@ -216,14 +251,18 @@ public class Controller {
 
 
         if (this.tableView.getItems().size() > 0) {
+            this.run.setDisable(false);
+            this.run.setOnAction(new DeleteActionHandler(this.tableView.getItems(), messageBox, detailsBox));
+
             Scene scene = newGalleryPathPane.getScene();
 
             scene.setOnKeyPressed(e -> {
-                if (e.getCode() == KeyCode.DELETE) {
+                if (e.getCode() == KeyCode.BACK_SPACE) {
                     FileResult item = this.tableView.getSelectionModel().getSelectedItem();
-                    this.tableView.getItems().removeAll(item);
-                    messageBox.showInfo("Usunięto: "+item.getSource());
-                    detailsBox.hideInfo();
+                    item.triggerCheck();
+                    if(item.isChecked()){
+                        item.setResult("Do usunięcia");
+                    }
                 }
             });
 
@@ -235,23 +274,73 @@ public class Controller {
         }
     }
 
+    private static class DeleteActionHandler implements EventHandler<ActionEvent>{
+        private Collection<FileResult> items;
+        private MessageBox messageBox;
+        private DetailsBox detailsBox;
+
+        public DeleteActionHandler(Collection<FileResult> items, MessageBox messageBox, DetailsBox detailsBox) {
+            this.items = items;
+            this.messageBox = messageBox;
+            this.detailsBox = detailsBox;
+        }
+
+        @Override
+        public void handle(ActionEvent event) {
+            detailsBox.hideInfo();
+            messageBox.hideMessage();
+
+            DeletingService deletingService = DependencyContainer.getInstance().getDeletingService();
+            String results = deletingService.deleteSelectedFiles(items);
+
+            messageBox.showInfo("Udało się usunąć pliki ("+results+")");
+
+            items.clear();
+        }
+    }
+
     @FXML
     private void moveAction(ActionEvent event) throws GalleryNotInitException {
         messageBox.hideMessage();
         detailsBox.hideInfo();
 
-        RenamingService renamingService = DependencyContainer.getInstance().getRenamingService();
-        this.updateList(renamingService.fetchNewFiles());
+        MoveService moveService = DependencyContainer.getInstance().getMoveService();
+        this.updateList(moveService.fetchNewFiles());
 
         if (this.tableView.getItems().size() > 0) {
             this.run.setDisable(false);
-//            this.run.setOnAction(new RenameActionHandler(this.tableView.getItems(), messageBox));
+            this.run.setOnAction(new MoveActionHandler(this.tableView.getItems(), messageBox, detailsBox));
 
             this.tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
                 if (obs.getValue() != null) {
                     detailsBox.showInfo(obs.getValue().getSource());
                 }
             });
+        }
+    }
+
+    private static class MoveActionHandler implements EventHandler<ActionEvent>{
+        private Collection<FileResult> items;
+        private MessageBox messageBox;
+        private DetailsBox detailsBox;
+
+        public MoveActionHandler(Collection<FileResult> items, MessageBox messageBox, DetailsBox detailsBox) {
+            this.items = items;
+            this.messageBox = messageBox;
+            this.detailsBox = detailsBox;
+        }
+
+        @Override
+        public void handle(ActionEvent event) {
+            detailsBox.hideInfo();
+            messageBox.hideMessage();
+
+            MoveService moveService = DependencyContainer.getInstance().getMoveService();
+            String results = moveService.moveFiles(items);
+
+            messageBox.showInfo("Udało się przenieść pliki ("+results+")");
+
+            items.clear();
         }
     }
 

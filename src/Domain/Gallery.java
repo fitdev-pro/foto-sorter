@@ -6,8 +6,8 @@ import org.json.simple.JSONObject;
 import java.util.HashMap;
 
 public class Gallery {
-    private String rootGalleryDir;
-    private String newGalleryDir;
+    private String rootGalleryDir = "/home/karol/projects/fitdev/galeria";
+    private String newGalleryDir = "/home/karol/projects/fitdev/galeriaN";
 
     public Gallery(String rootGalleryDir, HashMap<String, String> settings) {
         this.rootGalleryDir = rootGalleryDir;
