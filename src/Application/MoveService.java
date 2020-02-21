@@ -30,7 +30,7 @@ public class MoveService {
                 Foto file = new Foto(filePath, fotoCreationDateReaders);
 
                 try {
-                    String resultFilePath = gallery.getRootGalleryDir() + "/" + file.generateDirectoryPathWithDate() + "/" + file.getFileName();
+                    String resultFilePath = gallery.getRootGalleryDir() + "/foto/" + file.generateDirectoryPathWithDate() + "/" + file.getFileName();
                     File newFile = new File(resultFilePath);
 
                     if (!newFile.exists()) {

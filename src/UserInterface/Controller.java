@@ -115,7 +115,7 @@ public class Controller {
         this.tableColumnResult.setCellValueFactory(new PropertyValueFactory<>("result"));
 
         this.tableView.setRowFactory(row -> {
-            TableRow<FileResult> rowNew = new TableRow<FileResult>(){
+                return new TableRow<FileResult>(){
                     @Override
                     public void updateItem(FileResult item, boolean empty){
                         super.updateItem(item, empty);
@@ -130,13 +130,6 @@ public class Controller {
                     }
 
                 };
-
-                rowNew.setOnMouseClicked(eventClick -> {
-                    if (eventClick.getClickCount() == 2 && (! rowNew.isEmpty()) ) {
-                        rowNew.getItem().triggerCheck();
-                    }
-                });
-                return rowNew;
             });
 
         this.tableView.getItems().setAll(list);
@@ -206,13 +199,15 @@ public class Controller {
 
         if (this.tableView.getItems().size() > 0) {
             this.run.setDisable(false);
-            this.run.setOnAction(new DeleteActionHandler(this.tableView.getItems(), messageBox, detailsBox));
+            this.run.setOnAction(new RemoveDuplicatesActionHandler(this.tableView.getItems(), messageBox, detailsBox));
 
             this.tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
                 if (obs.getValue() != null) {
                     detailsBox.showInfo(obs.getValue().getSource());
                 }
             });
+
+
         }
     }
 
@@ -257,11 +252,13 @@ public class Controller {
             Scene scene = newGalleryPathPane.getScene();
 
             scene.setOnKeyPressed(e -> {
-                if (e.getCode() == KeyCode.BACK_SPACE) {
+                if (e.getCode() == KeyCode.ENTER) {
                     FileResult item = this.tableView.getSelectionModel().getSelectedItem();
                     item.triggerCheck();
                     if(item.isChecked()){
                         item.setResult("Do usunięcia");
+                    }else{
+                        item.setResult("-");
                     }
                 }
             });
