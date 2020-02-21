@@ -46,20 +46,35 @@ public class RenamingService {
 
     public String renameFiles(Collection<FileResult> files){
         int i = 0;
+        int e = 0;
+        int b = 0;
         int all = files.size();
 
         for (FileResult item: files) {
             File oldFile = new File(item.getSource());
             File newFile = new File(item.getResult());
 
+            int fileNumber = 1;
+            int pos = newFile.getPath().length() - 4;
+            while (newFile.exists()){
+                String str = newFile.getPath();
+                str = str.substring(0, pos) + fileNumber + str.substring(pos + 1);
+                newFile = new File(str);
+                fileNumber++;
+            }
+
             if (!newFile.exists()) {
                 boolean success = oldFile.renameTo(newFile);
                 if (success) {
                     i++;
+                }else{
+                    b++;
                 }
+            }else{
+                e++;
             }
         }
 
-        return i+"/"+all;
+        return "all:"+all+"/renamed:"+i+"/error:"+b+"/exists:"+e;
     }
 }

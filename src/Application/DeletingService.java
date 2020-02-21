@@ -36,6 +36,7 @@ public class DeletingService {
     public String deleteSelectedFiles(Collection<FileResult> files){
         int i = 0;
         int all = 0;
+        int e = 0;
 
         for (FileResult item: files) {
             if(item.isChecked()){
@@ -47,10 +48,12 @@ public class DeletingService {
                     if (success) {
                         i++;
                     }
+                }else{
+                    e++;
                 }
             }
         }
 
-        return i+"/"+all;
+        return "all:"+all+"/delete:"+i+"/not exists:"+e;
     }
 }

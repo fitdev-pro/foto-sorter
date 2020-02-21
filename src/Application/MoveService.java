@@ -47,6 +47,8 @@ public class MoveService {
 
     public String moveFiles(Collection<FileResult> files) {
         int i = 0;
+        int e = 0;
+        int b = 0;
         int all = files.size();
 
         for (FileResult item: files) {
@@ -65,11 +67,17 @@ public class MoveService {
                     boolean successMove = oldFile.renameTo(newFile);
                     if (successMove) {
                         i++;
+                    }else{
+                        e++;
                     }
+                }else{
+                    e++;
                 }
+            }else{
+                b++;
             }
         }
 
-        return i+"/"+all;
+        return "all:"+all+"/move:"+i+"/error:"+e+"/exists:"+b;
     }
 }
