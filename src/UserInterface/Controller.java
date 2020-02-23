@@ -206,8 +206,8 @@ public class Controller {
                     detailsBox.showInfo(obs.getValue().getSource());
                 }
             });
-
-
+        }else{
+            messageBox.showInfo("Brak duplikatów.");
         }
     }
 
@@ -255,11 +255,6 @@ public class Controller {
                 if (e.getCode() == KeyCode.ENTER) {
                     FileResult item = this.tableView.getSelectionModel().getSelectedItem();
                     item.triggerCheck();
-                    if(item.isChecked()){
-                        item.setResult("Do usunięcia");
-                    }else{
-                        item.setResult("-");
-                    }
                 }
             });
 
@@ -268,6 +263,8 @@ public class Controller {
                     detailsBox.showInfo(obs.getValue().getSource());
                 }
             });
+        }else{
+            messageBox.showInfo("Brak plików.");
         }
     }
 
@@ -308,11 +305,22 @@ public class Controller {
             this.run.setDisable(false);
             this.run.setOnAction(new MoveActionHandler(this.tableView.getItems(), messageBox, detailsBox));
 
+            Scene scene = newGalleryPathPane.getScene();
+
+            scene.setOnKeyPressed(e -> {
+                if (e.getCode() == KeyCode.ENTER) {
+                    FileResult item = this.tableView.getSelectionModel().getSelectedItem();
+                    item.triggerCheck();
+                }
+            });
+
             this.tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
                 if (obs.getValue() != null) {
                     detailsBox.showInfo(obs.getValue().getSource());
                 }
             });
+        }else{
+            messageBox.showInfo("Brak plików.");
         }
     }
 

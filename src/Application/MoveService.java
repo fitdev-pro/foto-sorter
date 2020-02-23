@@ -47,37 +47,42 @@ public class MoveService {
 
     public String moveFiles(Collection<FileResult> files) {
         int i = 0;
+        int m = 0;
         int e = 0;
         int b = 0;
         int all = files.size();
 
         for (FileResult item: files) {
-            File oldFile = new File(item.getSource());
-            File newFile = new File(item.getResult());
+            if(!item.isChecked()) {
+                File oldFile = new File(item.getSource());
+                File newFile = new File(item.getResult());
 
-            if (!newFile.exists()) {
-                File parentDir = new File(newFile.getParent());
-                boolean parentDirExists = parentDir.exists();
+                if (!newFile.exists()) {
+                    File parentDir = new File(newFile.getParent());
+                    boolean parentDirExists = parentDir.exists();
 
-                if(!parentDirExists){
-                    parentDirExists = parentDir.mkdirs();
-                }
+                    if (!parentDirExists) {
+                        parentDirExists = parentDir.mkdirs();
+                    }
 
-                if (parentDirExists){
-                    boolean successMove = oldFile.renameTo(newFile);
-                    if (successMove) {
-                        i++;
-                    }else{
+                    if (parentDirExists) {
+                        boolean successMove = oldFile.renameTo(newFile);
+                        if (successMove) {
+                            m++;
+                        } else {
+                            e++;
+                        }
+                    } else {
                         e++;
                     }
-                }else{
-                    e++;
+                } else {
+                    b++;
                 }
             }else{
-                b++;
+                i++;
             }
         }
 
-        return "all:"+all+"/move:"+i+"/error:"+e+"/exists:"+b;
+        return "all:"+all+"/move:"+m+"/error:"+e+"/exists:"+b+"/ignore:"+i;
     }
 }
